@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
@@ -23,17 +23,12 @@ export default function EarthquakeScreen() {
   const router = useRouter();
   const [items, setItems] = useState<ChecklistItemType[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadItems();
-  }, []);
-
-  useEffect(() => {
-    if (!loading) {
-      saveItems();
-    }
-  }, [items, loading]);
+  useFocusEffect(
+    useCallback(() => {
+      loadItems();
+    }, [])
+  );
 
   const loadItems = async () => {
     try {
@@ -45,19 +40,19 @@ export default function EarthquakeScreen() {
         setItems(parsedData);
       } else {
         const defaultItems = getDefaultItems('earthquake');
+        console.log('No saved data, loading defaults:', defaultItems.length);
         setItems(defaultItems);
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(defaultItems));
       }
     } catch (error) {
       console.error('Error loading items:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
-  const saveItems = async () => {
+  const saveItems = async (updatedItems: ChecklistItemType[]) => {
     try {
       console.log('Saving earthquake checklist items...');
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedItems));
     } catch (error) {
       console.error('Error saving items:', error);
     }
@@ -65,11 +60,11 @@ export default function EarthquakeScreen() {
 
   const handleToggle = (id: string) => {
     console.log('Toggling item:', id);
-    setItems(prevItems =>
-      prevItems.map(item =>
-        item.id === id ? { ...item, checked: !item.checked } : item
-      )
+    const updatedItems = items.map(item =>
+      item.id === id ? { ...item, checked: !item.checked } : item
     );
+    setItems(updatedItems);
+    saveItems(updatedItems);
   };
 
   const handleAddItem = (label: string) => {
@@ -80,12 +75,16 @@ export default function EarthquakeScreen() {
       checked: false,
       isCustom: true,
     };
-    setItems(prevItems => [...prevItems, newItem]);
+    const updatedItems = [...items, newItem];
+    setItems(updatedItems);
+    saveItems(updatedItems);
   };
 
   const handleDeleteItem = (id: string) => {
     console.log('Deleting item:', id);
-    setItems(prevItems => prevItems.filter(item => item.id !== id));
+    const updatedItems = items.filter(item => item.id !== id);
+    setItems(updatedItems);
+    saveItems(updatedItems);
   };
 
   const handleReset = () => {
