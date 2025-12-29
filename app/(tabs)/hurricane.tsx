@@ -23,12 +23,13 @@ export default function HurricaneScreen() {
   const router = useRouter();
   const [items, setItems] = useState<ChecklistItemType[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
       console.log('Hurricane screen focused, reloading items...');
       loadItems();
-    }, [])
+    }, [refreshKey])
   );
 
   const loadItems = async () => {
@@ -40,11 +41,11 @@ export default function HurricaneScreen() {
         console.log(`Loaded ${parsedData.length} items from storage`);
         const checkedCount = parsedData.filter((item: ChecklistItemType) => item.checked).length;
         console.log(`${checkedCount} items are checked`);
-        setItems(parsedData);
+        setItems([...parsedData]);
       } else {
         console.log('No saved data found, loading defaults');
         const defaultItems = getDefaultItems('hurricane');
-        setItems(defaultItems);
+        setItems([...defaultItems]);
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(defaultItems));
       }
     } catch (error) {
@@ -100,20 +101,26 @@ export default function HurricaneScreen() {
             try {
               console.log('=== RESETTING HURRICANE CHECKLIST ===');
               
+              // Step 1: Remove from AsyncStorage
               await AsyncStorage.removeItem(STORAGE_KEY);
-              console.log('Cleared existing data');
+              console.log('Cleared existing data from AsyncStorage');
               
-              await new Promise(resolve => setTimeout(resolve, 50));
-              
+              // Step 2: Get fresh default items
               const resetItems = getDefaultItems('hurricane');
               console.log(`Created ${resetItems.length} reset items, all unchecked: ${resetItems.every(item => !item.checked)}`);
               
+              // Step 3: Save to AsyncStorage
               await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(resetItems));
-              console.log('Saved reset items to storage');
+              console.log('Saved reset items to AsyncStorage');
               
-              setItems(resetItems);
-              console.log('Updated state');
+              // Step 4: Force state update with new array reference
+              setItems([...resetItems]);
+              console.log('Updated state with reset items');
               
+              // Step 5: Force refresh
+              setRefreshKey(prev => prev + 1);
+              
+              console.log('=== RESET COMPLETE ===');
               Alert.alert('Success', 'Checklist has been reset.');
             } catch (error) {
               console.error('Error resetting checklist:', error);
@@ -190,7 +197,7 @@ export default function HurricaneScreen() {
       >
         {items.map((item, index) => (
           <ChecklistItem
-            key={index}
+            key={`${item.id}-${refreshKey}`}
             item={item}
             onToggle={handleToggle}
             onDelete={item.isCustom ? handleDeleteItem : undefined}
