@@ -123,6 +123,18 @@ export default function FireScreen() {
               {checkedCount} of {totalCount} items ready
             </Text>
           </View>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => setModalVisible(true)}
+            activeOpacity={0.7}
+          >
+            <IconSymbol
+              ios_icon_name="plus.circle.fill"
+              android_material_icon_name="add-circle"
+              size={32}
+              color={colors.primary}
+            />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -148,19 +160,6 @@ export default function FireScreen() {
           />
         ))}
       </ScrollView>
-
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => setModalVisible(true)}
-        activeOpacity={0.8}
-      >
-        <IconSymbol
-          ios_icon_name="plus"
-          android_material_icon_name="add"
-          size={28}
-          color={colors.card}
-        />
-      </TouchableOpacity>
 
       <AddItemModal
         visible={modalVisible}
@@ -221,6 +220,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textLight,
   },
+  addButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
   progressContainer: {
     paddingHorizontal: 16,
     paddingVertical: 16,
@@ -250,18 +256,5 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     paddingBottom: 100,
-  },
-  fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: 100,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.15)',
-    elevation: 6,
   },
 });
