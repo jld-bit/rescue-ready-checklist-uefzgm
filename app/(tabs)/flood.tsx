@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { ChecklistItem } from '@/components/ChecklistItem';
 import { AddItemModal } from '@/components/AddItemModal';
 import { ChecklistItemType, getDefaultItems } from '@/constants/DefaultChecklists';
+import { checklistEvents } from '@/utils/checklistEvents';
 
 const STORAGE_KEY = 'flood_checklist';
 
@@ -23,16 +24,8 @@ export default function FloodScreen() {
   const router = useRouter();
   const [items, setItems] = useState<ChecklistItemType[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
 
-  useFocusEffect(
-    useCallback(() => {
-      console.log('Flood screen focused, reloading items...');
-      loadItems();
-    }, [refreshKey])
-  );
-
-  const loadItems = async () => {
+  const loadItems = useCallback(async () => {
     try {
       console.log('Loading flood checklist items...');
       const savedData = await AsyncStorage.getItem(STORAGE_KEY);
@@ -41,17 +34,37 @@ export default function FloodScreen() {
         console.log(`Loaded ${parsedData.length} items from storage`);
         const checkedCount = parsedData.filter((item: ChecklistItemType) => item.checked).length;
         console.log(`${checkedCount} items are checked`);
-        setItems([...parsedData]);
+        setItems(parsedData);
       } else {
         console.log('No saved data found, loading defaults');
         const defaultItems = getDefaultItems('flood');
-        setItems([...defaultItems]);
+        setItems(defaultItems);
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(defaultItems));
       }
     } catch (error) {
       console.error('Error loading items:', error);
     }
-  };
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      console.log('Flood screen focused, reloading items...');
+      loadItems();
+    }, [loadItems])
+  );
+
+  useEffect(() => {
+    console.log('Flood screen: Setting up checklist event listener');
+    const unsubscribe = checklistEvents.subscribe(() => {
+      console.log('Flood screen: Received reset event, reloading...');
+      loadItems();
+    });
+
+    return () => {
+      console.log('Flood screen: Cleaning up event listener');
+      unsubscribe();
+    };
+  }, [loadItems]);
 
   const saveItems = async (updatedItems: ChecklistItemType[]) => {
     try {
@@ -101,24 +114,17 @@ export default function FloodScreen() {
             try {
               console.log('=== RESETTING FLOOD CHECKLIST ===');
               
-              // Step 1: Remove from AsyncStorage
               await AsyncStorage.removeItem(STORAGE_KEY);
               console.log('Cleared existing data from AsyncStorage');
               
-              // Step 2: Get fresh default items
               const resetItems = getDefaultItems('flood');
-              console.log(`Created ${resetItems.length} reset items, all unchecked: ${resetItems.every(item => !item.checked)}`);
+              console.log(`Created ${resetItems.length} reset items`);
               
-              // Step 3: Save to AsyncStorage
               await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(resetItems));
               console.log('Saved reset items to AsyncStorage');
               
-              // Step 4: Force state update with new array reference
-              setItems([...resetItems]);
+              setItems(resetItems);
               console.log('Updated state with reset items');
-              
-              // Step 5: Force refresh
-              setRefreshKey(prev => prev + 1);
               
               console.log('=== RESET COMPLETE ===');
               Alert.alert('Success', 'Checklist has been reset.');
@@ -197,7 +203,7 @@ export default function FloodScreen() {
       >
         {items.map((item, index) => (
           <ChecklistItem
-            key={`${item.id}-${refreshKey}`}
+            key={item.id}
             item={item}
             onToggle={handleToggle}
             onDelete={item.isCustom ? handleDeleteItem : undefined}

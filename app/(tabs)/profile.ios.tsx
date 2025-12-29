@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/IconSymbol";
@@ -7,8 +7,8 @@ import { GlassView } from "expo-glass-effect";
 import { useTheme } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
-import { useCallback } from "react";
 import { getDefaultItems } from "@/constants/DefaultChecklists";
+import { checklistEvents } from "@/utils/checklistEvents";
 
 interface CategoryStats {
   name: string;
@@ -25,13 +25,7 @@ export default function ProfileScreen() {
   const theme = useTheme();
   const [categoryStats, setCategoryStats] = useState<CategoryStats[]>([]);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadStats();
-    }, [])
-  );
-
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       console.log('Loading category stats...');
       const categories = [
@@ -106,7 +100,14 @@ export default function ProfileScreen() {
     } catch (error) {
       console.error('Error loading stats:', error);
     }
-  };
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      console.log('Profile screen focused, loading stats...');
+      loadStats();
+    }, [loadStats])
+  );
 
   const handleResetAll = () => {
     Alert.alert(
@@ -122,37 +123,22 @@ export default function ProfileScreen() {
               console.log('=== STARTING RESET ALL CHECKLISTS ===');
               const categories = ['fire', 'earthquake', 'flood', 'hurricane', 'poweroutage'];
               
-              // First, clear all existing data
               console.log('Step 1: Clearing all existing checklist data...');
               for (const category of categories) {
                 await AsyncStorage.removeItem(`${category}_checklist`);
                 console.log(`Cleared ${category}_checklist from storage`);
               }
               
-              // Small delay to ensure clears are complete
-              await new Promise(resolve => setTimeout(resolve, 100));
-              
-              // Now write fresh default items
               console.log('Step 2: Writing fresh default items...');
               for (const category of categories) {
                 const resetItems = getDefaultItems(category);
-                console.log(`Creating reset items for ${category}: ${resetItems.length} items, all unchecked: ${resetItems.every(item => !item.checked)}`);
+                console.log(`Creating reset items for ${category}: ${resetItems.length} items`);
                 await AsyncStorage.setItem(`${category}_checklist`, JSON.stringify(resetItems));
                 console.log(`Saved ${category}_checklist to storage`);
               }
               
-              // Verify the data was written correctly
-              console.log('Step 3: Verifying data...');
-              for (const category of categories) {
-                const data = await AsyncStorage.getItem(`${category}_checklist`);
-                if (data) {
-                  const items = JSON.parse(data);
-                  const checkedCount = items.filter((item: any) => item.checked).length;
-                  console.log(`${category}: ${items.length} items, ${checkedCount} checked`);
-                }
-              }
-              
-              // Reload stats
+              console.log('Step 3: Notifying all screens and refreshing stats...');
+              checklistEvents.emit();
               await loadStats();
               
               console.log('=== RESET ALL COMPLETE ===');
@@ -180,31 +166,18 @@ export default function ProfileScreen() {
             try {
               console.log(`=== STARTING RESET ${categoryName.toUpperCase()} ===`);
               
-              // First, clear existing data
               console.log('Step 1: Clearing existing data...');
               await AsyncStorage.removeItem(`${categoryName}_checklist`);
               console.log(`Cleared ${categoryName}_checklist from storage`);
               
-              // Small delay to ensure clear is complete
-              await new Promise(resolve => setTimeout(resolve, 50));
-              
-              // Now write fresh default items
               console.log('Step 2: Writing fresh default items...');
               const resetItems = getDefaultItems(categoryName);
-              console.log(`Created ${resetItems.length} items, all unchecked: ${resetItems.every(item => !item.checked)}`);
+              console.log(`Created ${resetItems.length} items`);
               await AsyncStorage.setItem(`${categoryName}_checklist`, JSON.stringify(resetItems));
               console.log('Saved to storage');
               
-              // Verify
-              console.log('Step 3: Verifying...');
-              const data = await AsyncStorage.getItem(`${categoryName}_checklist`);
-              if (data) {
-                const items = JSON.parse(data);
-                const checkedCount = items.filter((item: any) => item.checked).length;
-                console.log(`Verified: ${items.length} items, ${checkedCount} checked`);
-              }
-              
-              // Reload stats
+              console.log('Step 3: Notifying all screens and refreshing stats...');
+              checklistEvents.emit();
               await loadStats();
               
               console.log(`=== RESET ${categoryName.toUpperCase()} COMPLETE ===`);
