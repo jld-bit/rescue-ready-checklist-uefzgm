@@ -26,6 +26,7 @@ export default function FloodScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      console.log('Flood screen focused, reloading items...');
       loadItems();
     }, [])
   );
@@ -36,11 +37,13 @@ export default function FloodScreen() {
       const savedData = await AsyncStorage.getItem(STORAGE_KEY);
       if (savedData) {
         const parsedData = JSON.parse(savedData);
-        console.log('Loaded items:', parsedData.length);
+        console.log(`Loaded ${parsedData.length} items from storage`);
+        const checkedCount = parsedData.filter((item: ChecklistItemType) => item.checked).length;
+        console.log(`${checkedCount} items are checked`);
         setItems(parsedData);
       } else {
+        console.log('No saved data found, loading defaults');
         const defaultItems = getDefaultItems('flood');
-        console.log('No saved data, loading defaults:', defaultItems.length);
         setItems(defaultItems);
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(defaultItems));
       }
@@ -51,15 +54,14 @@ export default function FloodScreen() {
 
   const saveItems = async (updatedItems: ChecklistItemType[]) => {
     try {
-      console.log('Saving flood checklist items...');
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedItems));
+      console.log('Saved flood checklist items');
     } catch (error) {
       console.error('Error saving items:', error);
     }
   };
 
   const handleToggle = (id: string) => {
-    console.log('Toggling item:', id);
     const updatedItems = items.map(item =>
       item.id === id ? { ...item, checked: !item.checked } : item
     );
@@ -68,7 +70,6 @@ export default function FloodScreen() {
   };
 
   const handleAddItem = (label: string) => {
-    console.log('Adding custom item:', label);
     const newItem: ChecklistItemType = {
       id: `flood-custom-${Date.now()}`,
       label,
@@ -81,7 +82,6 @@ export default function FloodScreen() {
   };
 
   const handleDeleteItem = (id: string) => {
-    console.log('Deleting item:', id);
     const updatedItems = items.filter(item => item.id !== id);
     setItems(updatedItems);
     saveItems(updatedItems);
@@ -98,17 +98,21 @@ export default function FloodScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              console.log('Resetting flood checklist...');
+              console.log('=== RESETTING FLOOD CHECKLIST ===');
+              
+              await AsyncStorage.removeItem(STORAGE_KEY);
+              console.log('Cleared existing data');
+              
+              await new Promise(resolve => setTimeout(resolve, 50));
               
               const resetItems = getDefaultItems('flood');
-              console.log('Reset items created:', resetItems.length, 'items');
-              console.log('All items have checked=false:', resetItems.every(item => item.checked === false));
+              console.log(`Created ${resetItems.length} reset items, all unchecked: ${resetItems.every(item => !item.checked)}`);
               
               await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(resetItems));
-              console.log('Saved to AsyncStorage');
+              console.log('Saved reset items to storage');
               
-              setItems([...resetItems]);
-              console.log('State updated');
+              setItems(resetItems);
+              console.log('Updated state');
               
               Alert.alert('Success', 'Checklist has been reset.');
             } catch (error) {
