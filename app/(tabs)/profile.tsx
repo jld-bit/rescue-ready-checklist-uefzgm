@@ -84,7 +84,6 @@ export default function ProfileScreen() {
           total = items.length;
           completed = items.filter((item: any) => item.checked).length;
         } else {
-          // If no data exists, get default items count
           const defaultItems = getDefaultItems(category.name);
           total = defaultItems.length;
           completed = 0;
@@ -124,15 +123,11 @@ export default function ProfileScreen() {
               const categories = ['fire', 'earthquake', 'flood', 'hurricane', 'poweroutage'];
               
               for (const category of categories) {
-                // Get fresh default items (already returns with checked: false)
                 const resetItems = getDefaultItems(category);
-                
-                // Save to AsyncStorage
+                console.log(`Resetting ${category} with ${resetItems.length} items, all checked=false:`, resetItems.every(item => item.checked === false));
                 await AsyncStorage.setItem(`${category}_checklist`, JSON.stringify(resetItems));
-                console.log(`Reset ${category} checklist with ${resetItems.length} items`);
               }
               
-              // Reload stats to reflect changes
               await loadStats();
               
               console.log('All checklists reset successfully');
@@ -160,14 +155,12 @@ export default function ProfileScreen() {
             try {
               console.log(`Resetting ${categoryName} checklist...`);
               
-              // Get fresh default items (already returns with checked: false)
               const resetItems = getDefaultItems(categoryName);
+              console.log(`Reset items created for ${categoryName}:`, resetItems.length, 'items, all checked=false:', resetItems.every(item => item.checked === false));
               
-              // Save to AsyncStorage
               await AsyncStorage.setItem(`${categoryName}_checklist`, JSON.stringify(resetItems));
-              console.log(`Reset ${categoryName} checklist with ${resetItems.length} items`);
+              console.log('Saved to AsyncStorage');
               
-              // Reload stats to reflect changes
               await loadStats();
               
               console.log(`${displayName} checklist reset successfully`);

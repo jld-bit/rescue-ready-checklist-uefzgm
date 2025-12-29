@@ -44,7 +44,6 @@ export default function FloodScreen() {
         console.log('Loaded items:', parsedData.length);
         setItems(parsedData);
       } else {
-        // If no saved data, initialize with default items
         const defaultItems = getDefaultItems('flood');
         setItems(defaultItems);
       }
@@ -102,16 +101,16 @@ export default function FloodScreen() {
             try {
               console.log('Resetting flood checklist...');
               
-              // Get fresh default items (already returns with checked: false)
               const resetItems = getDefaultItems('flood');
+              console.log('Reset items created:', resetItems.length, 'items');
+              console.log('All items have checked=false:', resetItems.every(item => item.checked === false));
               
-              // Save to AsyncStorage
               await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(resetItems));
+              console.log('Saved to AsyncStorage');
               
-              // Update state
-              setItems(resetItems);
+              setItems([...resetItems]);
+              console.log('State updated');
               
-              console.log('Flood checklist reset successfully with', resetItems.length, 'items');
               Alert.alert('Success', 'Checklist has been reset.');
             } catch (error) {
               console.error('Error resetting checklist:', error);
