@@ -135,6 +135,20 @@ export default function ProfileScreen() {
             Stay prepared for emergencies with comprehensive checklists for fire, earthquake, flood, hurricane, and power outage scenarios.
           </Text>
         </GlassView>
+
+        <GlassView style={[
+          styles.section,
+          Platform.OS !== 'ios' && { backgroundColor: theme.dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }
+        ]} glassEffectStyle="regular">
+          <View style={styles.disclaimerHeader}>
+            <IconSymbol ios_icon_name="exclamationmark.triangle" android_material_icon_name="warning" size={20} color="#FF9500" />
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Disclaimer</Text>
+          </View>
+          
+          <Text style={[styles.disclaimerText, { color: theme.dark ? '#98989D' : '#666' }]}>
+            This checklist is provided for general guidance and informational purposes only. It is not an official emergency plan and does not guarantee safety or survival in any disaster or emergency situation. Users are responsible for preparing and following official guidance from local authorities and emergency services.
+          </Text>
+        </GlassView>
       </ScrollView>
     </SafeAreaView>
   );
@@ -227,5 +241,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     marginTop: 8,
+  },
+  disclaimerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  disclaimerText: {
+    fontSize: 13,
+    lineHeight: 20,
+    fontStyle: 'italic',
   },
 });
