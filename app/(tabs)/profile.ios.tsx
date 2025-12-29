@@ -117,10 +117,13 @@ export default function ProfileScreen() {
                 const data = await AsyncStorage.getItem(`${category}_checklist`);
                 if (data) {
                   const items = JSON.parse(data);
-                  const resetItems = items.filter((item: any) => !item.isCustom).map((item: any) => ({
-                    ...item,
-                    checked: false
-                  }));
+                  // Keep only non-custom items and reset their checked state
+                  const resetItems = items
+                    .filter((item: any) => !item.isCustom)
+                    .map((item: any) => ({
+                      ...item,
+                      checked: false
+                    }));
                   await AsyncStorage.setItem(`${category}_checklist`, JSON.stringify(resetItems));
                 }
               }
@@ -150,10 +153,13 @@ export default function ProfileScreen() {
               const data = await AsyncStorage.getItem(`${categoryName}_checklist`);
               if (data) {
                 const items = JSON.parse(data);
-                const resetItems = items.filter((item: any) => !item.isCustom).map((item: any) => ({
-                  ...item,
-                  checked: false
-                }));
+                // Keep only non-custom items and reset their checked state
+                const resetItems = items
+                  .filter((item: any) => !item.isCustom)
+                  .map((item: any) => ({
+                    ...item,
+                    checked: false
+                  }));
                 await AsyncStorage.setItem(`${categoryName}_checklist`, JSON.stringify(resetItems));
               }
               await loadStats();

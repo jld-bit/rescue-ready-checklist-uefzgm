@@ -115,9 +115,10 @@ export default function FireScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
+              console.log('Resetting fire checklist...');
               const resetItems = DEFAULT_ITEMS.map(item => ({ ...item, checked: false }));
-              setItems(resetItems);
               await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(resetItems));
+              setItems(resetItems);
               Alert.alert('Success', 'Checklist has been reset.');
             } catch (error) {
               console.log('Error resetting checklist:', error);
