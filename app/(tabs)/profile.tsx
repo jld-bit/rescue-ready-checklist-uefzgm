@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback } from "react";
-import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, Alert } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { IconSymbol } from "@/components/IconSymbol";
 import { GlassView } from "expo-glass-effect";
@@ -8,7 +8,6 @@ import { useTheme } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { getDefaultItems } from "@/constants/DefaultChecklists";
-import { checklistEvents } from "@/utils/checklistEvents";
 
 interface CategoryStats {
   name: string;
@@ -109,97 +108,6 @@ export default function ProfileScreen() {
     }, [])
   );
 
-  const handleResetAll = () => {
-    Alert.alert(
-      'Reset All Checklists',
-      'Are you sure you want to reset all checklists? This will uncheck all items and remove custom items.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reset',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              console.log('=== STARTING RESET ALL CHECKLISTS ===');
-              const categories = ['fire', 'earthquake', 'flood', 'hurricane', 'poweroutage'];
-              
-              console.log('Step 1: Clearing all existing checklist data...');
-              for (const category of categories) {
-                await AsyncStorage.removeItem(`${category}_checklist`);
-                console.log(`Cleared ${category}_checklist from storage`);
-              }
-              
-              console.log('Step 2: Writing fresh default items...');
-              for (const category of categories) {
-                const resetItems = getDefaultItems(category);
-                console.log(`Creating reset items for ${category}: ${resetItems.length} items`);
-                await AsyncStorage.setItem(`${category}_checklist`, JSON.stringify(resetItems));
-                console.log(`Saved ${category}_checklist to storage`);
-              }
-              
-              console.log('Step 3: Notifying all screens...');
-              checklistEvents.emitAll();
-              
-              console.log('Step 4: Refreshing stats with delay...');
-              setTimeout(() => {
-                loadStats();
-              }, 200);
-              
-              console.log('=== RESET ALL COMPLETE ===');
-              Alert.alert('Success', 'All checklists have been reset.');
-            } catch (error) {
-              console.error('Error resetting checklists:', error);
-              Alert.alert('Error', 'Failed to reset checklists.');
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const handleResetCategory = (categoryName: string, displayName: string) => {
-    Alert.alert(
-      `Reset ${displayName}`,
-      `Are you sure you want to reset the ${displayName} checklist? This will uncheck all items and remove custom items.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reset',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              console.log(`=== STARTING RESET ${categoryName.toUpperCase()} ===`);
-              
-              console.log('Step 1: Clearing existing data...');
-              await AsyncStorage.removeItem(`${categoryName}_checklist`);
-              console.log(`Cleared ${categoryName}_checklist from storage`);
-              
-              console.log('Step 2: Writing fresh default items...');
-              const resetItems = getDefaultItems(categoryName);
-              console.log(`Created ${resetItems.length} items`);
-              await AsyncStorage.setItem(`${categoryName}_checklist`, JSON.stringify(resetItems));
-              console.log('Saved to storage');
-              
-              console.log('Step 3: Notifying screens...');
-              checklistEvents.emit(categoryName);
-              
-              console.log('Step 4: Refreshing stats with delay...');
-              setTimeout(() => {
-                loadStats();
-              }, 200);
-              
-              console.log(`=== RESET ${categoryName.toUpperCase()} COMPLETE ===`);
-              Alert.alert('Success', `${displayName} checklist has been reset.`);
-            } catch (error) {
-              console.error('Error resetting checklist:', error);
-              Alert.alert('Error', 'Failed to reset checklist.');
-            }
-          },
-        },
-      ]
-    );
-  };
-
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]} edges={['top']}>
       <ScrollView
@@ -239,17 +147,6 @@ export default function ProfileScreen() {
                   </Text>
                 </View>
               </View>
-              <TouchableOpacity 
-                onPress={() => handleResetCategory(category.name, category.displayName)}
-                style={styles.resetButton}
-              >
-                <IconSymbol 
-                  ios_icon_name="arrow.counterclockwise" 
-                  android_material_icon_name="refresh" 
-                  size={20} 
-                  color={theme.dark ? '#98989D' : '#666'} 
-                />
-              </TouchableOpacity>
             </View>
 
             <View style={styles.progressContainer}>
@@ -270,18 +167,6 @@ export default function ProfileScreen() {
             </View>
           </GlassView>
         ))}
-
-        <GlassView style={[
-          styles.section,
-          Platform.OS !== 'ios' && { backgroundColor: theme.dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }
-        ]} glassEffectStyle="regular">
-          <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>Quick Actions</Text>
-          
-          <TouchableOpacity style={styles.actionButton} onPress={handleResetAll}>
-            <IconSymbol ios_icon_name="arrow.counterclockwise" android_material_icon_name="refresh" size={24} color={theme.dark ? '#98989D' : '#666'} />
-            <Text style={[styles.actionText, { color: theme.colors.text }]}>Reset All Checklists</Text>
-          </TouchableOpacity>
-        </GlassView>
 
         <GlassView style={[
           styles.section,
@@ -375,9 +260,6 @@ const styles = StyleSheet.create({
   categorySubtext: {
     fontSize: 13,
   },
-  resetButton: {
-    padding: 8,
-  },
   progressContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -409,15 +291,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 8,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 8,
-  },
-  actionText: {
-    fontSize: 16,
   },
   infoRow: {
     flexDirection: 'row',

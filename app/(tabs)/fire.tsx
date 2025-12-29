@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
-  Alert,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,7 +15,6 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { ChecklistItem } from '@/components/ChecklistItem';
 import { AddItemModal } from '@/components/AddItemModal';
 import { ChecklistItemType, getDefaultItems } from '@/constants/DefaultChecklists';
-import { checklistEvents } from '@/utils/checklistEvents';
 
 const STORAGE_KEY = 'fire_checklist';
 const CATEGORY = 'fire';
@@ -54,21 +52,6 @@ export default function FireScreen() {
     }, [])
   );
 
-  useEffect(() => {
-    console.log('Fire screen: Setting up checklist event listener');
-    const unsubscribe = checklistEvents.subscribe(CATEGORY, () => {
-      console.log('Fire screen: Received reset event, reloading...');
-      setTimeout(() => {
-        loadItems();
-      }, 100);
-    });
-
-    return () => {
-      console.log('Fire screen: Cleaning up event listener');
-      unsubscribe();
-    };
-  }, []);
-
   const saveItems = async (updatedItems: ChecklistItemType[]) => {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedItems));
@@ -104,45 +87,6 @@ export default function FireScreen() {
     saveItems(updatedItems);
   };
 
-  const handleReset = () => {
-    Alert.alert(
-      'Reset Checklist',
-      'Are you sure you want to reset this checklist? This will uncheck all items and remove custom items.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reset',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              console.log('=== RESETTING FIRE CHECKLIST ===');
-              
-              await AsyncStorage.removeItem(STORAGE_KEY);
-              console.log('Cleared existing data from AsyncStorage');
-              
-              const resetItems = getDefaultItems(CATEGORY);
-              console.log(`Created ${resetItems.length} reset items`);
-              
-              await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(resetItems));
-              console.log('Saved reset items to AsyncStorage');
-              
-              setItems(resetItems);
-              console.log('Updated state with reset items');
-              
-              checklistEvents.emit(CATEGORY);
-              
-              console.log('=== RESET COMPLETE ===');
-              Alert.alert('Success', 'Checklist has been reset.');
-            } catch (error) {
-              console.error('Error resetting checklist:', error);
-              Alert.alert('Error', 'Failed to reset checklist.');
-            }
-          },
-        },
-      ]
-    );
-  };
-
   const checkedCount = items.filter(item => item.checked).length;
   const totalCount = items.length;
   const progress = totalCount > 0 ? (checkedCount / totalCount) * 100 : 0;
@@ -159,18 +103,6 @@ export default function FireScreen() {
             <IconSymbol
               ios_icon_name="chevron.left"
               android_material_icon_name="chevron-left"
-              size={24}
-              color={colors.text}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.resetButton}
-            onPress={handleReset}
-            activeOpacity={0.7}
-          >
-            <IconSymbol
-              ios_icon_name="arrow.counterclockwise"
-              android_material_icon_name="refresh"
               size={24}
               color={colors.text}
             />
@@ -254,7 +186,7 @@ const styles = StyleSheet.create({
   },
   headerTop: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     marginBottom: 12,
   },
@@ -262,12 +194,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     justifyContent: 'center',
-  },
-  resetButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'flex-end',
   },
   headerContent: {
     flexDirection: 'row',
