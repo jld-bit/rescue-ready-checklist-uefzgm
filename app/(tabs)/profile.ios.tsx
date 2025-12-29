@@ -114,9 +114,17 @@ export default function ProfileScreen() {
             try {
               const categories = ['fire', 'earthquake', 'flood', 'hurricane', 'poweroutage'];
               for (const category of categories) {
-                await AsyncStorage.removeItem(`${category}_checklist`);
+                const data = await AsyncStorage.getItem(`${category}_checklist`);
+                if (data) {
+                  const items = JSON.parse(data);
+                  const resetItems = items.filter((item: any) => !item.isCustom).map((item: any) => ({
+                    ...item,
+                    checked: false
+                  }));
+                  await AsyncStorage.setItem(`${category}_checklist`, JSON.stringify(resetItems));
+                }
               }
-              loadStats();
+              await loadStats();
               Alert.alert('Success', 'All checklists have been reset.');
             } catch (error) {
               console.log('Error resetting checklists:', error);
@@ -131,7 +139,7 @@ export default function ProfileScreen() {
   const handleResetCategory = (categoryName: string, displayName: string) => {
     Alert.alert(
       `Reset ${displayName}`,
-      `Are you sure you want to reset the ${displayName} checklist?`,
+      `Are you sure you want to reset the ${displayName} checklist? This will uncheck all items and remove custom items.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -139,8 +147,16 @@ export default function ProfileScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await AsyncStorage.removeItem(`${categoryName}_checklist`);
-              loadStats();
+              const data = await AsyncStorage.getItem(`${categoryName}_checklist`);
+              if (data) {
+                const items = JSON.parse(data);
+                const resetItems = items.filter((item: any) => !item.isCustom).map((item: any) => ({
+                  ...item,
+                  checked: false
+                }));
+                await AsyncStorage.setItem(`${categoryName}_checklist`, JSON.stringify(resetItems));
+              }
+              await loadStats();
               Alert.alert('Success', `${displayName} checklist has been reset.`);
             } catch (error) {
               console.log('Error resetting checklist:', error);

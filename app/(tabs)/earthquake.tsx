@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -105,6 +106,31 @@ export default function EarthquakeScreen() {
     setItems(prevItems => prevItems.filter(item => item.id !== id));
   };
 
+  const handleReset = () => {
+    Alert.alert(
+      'Reset Checklist',
+      'Are you sure you want to reset this checklist? This will uncheck all items and remove custom items.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const resetItems = DEFAULT_ITEMS.map(item => ({ ...item, checked: false }));
+              setItems(resetItems);
+              await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(resetItems));
+              Alert.alert('Success', 'Checklist has been reset.');
+            } catch (error) {
+              console.log('Error resetting checklist:', error);
+              Alert.alert('Error', 'Failed to reset checklist.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const checkedCount = items.filter(item => item.checked).length;
   const totalCount = items.length;
   const progress = totalCount > 0 ? (checkedCount / totalCount) * 100 : 0;
@@ -112,18 +138,32 @@ export default function EarthquakeScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-          activeOpacity={0.7}
-        >
-          <IconSymbol
-            ios_icon_name="chevron.left"
-            android_material_icon_name="chevron-left"
-            size={24}
-            color={colors.text}
-          />
-        </TouchableOpacity>
+        <View style={styles.headerTop}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            activeOpacity={0.7}
+          >
+            <IconSymbol
+              ios_icon_name="chevron.left"
+              android_material_icon_name="chevron-left"
+              size={24}
+              color={colors.text}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.resetButton}
+            onPress={handleReset}
+            activeOpacity={0.7}
+          >
+            <IconSymbol
+              ios_icon_name="arrow.counterclockwise"
+              android_material_icon_name="refresh"
+              size={24}
+              color={colors.text}
+            />
+          </TouchableOpacity>
+        </View>
         <View style={styles.headerContent}>
           <View style={styles.iconContainer}>
             <IconSymbol
@@ -200,11 +240,22 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   backButton: {
     width: 40,
     height: 40,
     justifyContent: 'center',
-    marginBottom: 12,
+  },
+  resetButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
   },
   headerContent: {
     flexDirection: 'row',
