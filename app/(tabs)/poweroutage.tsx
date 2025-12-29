@@ -19,13 +19,14 @@ import { ChecklistItemType, getDefaultItems } from '@/constants/DefaultChecklist
 import { checklistEvents } from '@/utils/checklistEvents';
 
 const STORAGE_KEY = 'poweroutage_checklist';
+const CATEGORY = 'poweroutage';
 
 export default function PowerOutageScreen() {
   const router = useRouter();
   const [items, setItems] = useState<ChecklistItemType[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
 
-  const loadItems = useCallback(async () => {
+  const loadItems = async () => {
     try {
       console.log('Loading power outage checklist items...');
       const savedData = await AsyncStorage.getItem(STORAGE_KEY);
@@ -37,34 +38,36 @@ export default function PowerOutageScreen() {
         setItems(parsedData);
       } else {
         console.log('No saved data found, loading defaults');
-        const defaultItems = getDefaultItems('poweroutage');
+        const defaultItems = getDefaultItems(CATEGORY);
         setItems(defaultItems);
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(defaultItems));
       }
     } catch (error) {
       console.error('Error loading items:', error);
     }
-  }, []);
+  };
 
   useFocusEffect(
     useCallback(() => {
       console.log('Power outage screen focused, reloading items...');
       loadItems();
-    }, [loadItems])
+    }, [])
   );
 
   useEffect(() => {
     console.log('Power outage screen: Setting up checklist event listener');
-    const unsubscribe = checklistEvents.subscribe(() => {
+    const unsubscribe = checklistEvents.subscribe(CATEGORY, () => {
       console.log('Power outage screen: Received reset event, reloading...');
-      loadItems();
+      setTimeout(() => {
+        loadItems();
+      }, 100);
     });
 
     return () => {
       console.log('Power outage screen: Cleaning up event listener');
       unsubscribe();
     };
-  }, [loadItems]);
+  }, []);
 
   const saveItems = async (updatedItems: ChecklistItemType[]) => {
     try {
@@ -117,7 +120,7 @@ export default function PowerOutageScreen() {
               await AsyncStorage.removeItem(STORAGE_KEY);
               console.log('Cleared existing data from AsyncStorage');
               
-              const resetItems = getDefaultItems('poweroutage');
+              const resetItems = getDefaultItems(CATEGORY);
               console.log(`Created ${resetItems.length} reset items`);
               
               await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(resetItems));
@@ -125,6 +128,8 @@ export default function PowerOutageScreen() {
               
               setItems(resetItems);
               console.log('Updated state with reset items');
+              
+              checklistEvents.emit(CATEGORY);
               
               console.log('=== RESET COMPLETE ===');
               Alert.alert('Success', 'Checklist has been reset.');

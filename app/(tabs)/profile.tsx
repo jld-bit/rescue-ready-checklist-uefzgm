@@ -25,7 +25,7 @@ export default function ProfileScreen() {
   const theme = useTheme();
   const [categoryStats, setCategoryStats] = useState<CategoryStats[]>([]);
 
-  const loadStats = useCallback(async () => {
+  const loadStats = async () => {
     try {
       console.log('Loading category stats...');
       const categories = [
@@ -100,13 +100,13 @@ export default function ProfileScreen() {
     } catch (error) {
       console.error('Error loading stats:', error);
     }
-  }, []);
+  };
 
   useFocusEffect(
     useCallback(() => {
       console.log('Profile screen focused, loading stats...');
       loadStats();
-    }, [loadStats])
+    }, [])
   );
 
   const handleResetAll = () => {
@@ -137,9 +137,13 @@ export default function ProfileScreen() {
                 console.log(`Saved ${category}_checklist to storage`);
               }
               
-              console.log('Step 3: Notifying all screens and refreshing stats...');
-              checklistEvents.emit();
-              await loadStats();
+              console.log('Step 3: Notifying all screens...');
+              checklistEvents.emitAll();
+              
+              console.log('Step 4: Refreshing stats with delay...');
+              setTimeout(() => {
+                loadStats();
+              }, 200);
               
               console.log('=== RESET ALL COMPLETE ===');
               Alert.alert('Success', 'All checklists have been reset.');
@@ -176,9 +180,13 @@ export default function ProfileScreen() {
               await AsyncStorage.setItem(`${categoryName}_checklist`, JSON.stringify(resetItems));
               console.log('Saved to storage');
               
-              console.log('Step 3: Notifying all screens and refreshing stats...');
-              checklistEvents.emit();
-              await loadStats();
+              console.log('Step 3: Notifying screens...');
+              checklistEvents.emit(categoryName);
+              
+              console.log('Step 4: Refreshing stats with delay...');
+              setTimeout(() => {
+                loadStats();
+              }, 200);
               
               console.log(`=== RESET ${categoryName.toUpperCase()} COMPLETE ===`);
               Alert.alert('Success', `${displayName} checklist has been reset.`);
