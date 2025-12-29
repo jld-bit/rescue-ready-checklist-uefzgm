@@ -83,18 +83,28 @@ export const DEFAULT_POWEROUTAGE_ITEMS: ChecklistItemType[] = [
 ];
 
 export const getDefaultItems = (category: string): ChecklistItemType[] => {
+  let sourceArray: ChecklistItemType[] = [];
+  
   switch (category) {
     case 'fire':
-      return DEFAULT_FIRE_ITEMS;
+      sourceArray = DEFAULT_FIRE_ITEMS;
+      break;
     case 'earthquake':
-      return DEFAULT_EARTHQUAKE_ITEMS;
+      sourceArray = DEFAULT_EARTHQUAKE_ITEMS;
+      break;
     case 'flood':
-      return DEFAULT_FLOOD_ITEMS;
+      sourceArray = DEFAULT_FLOOD_ITEMS;
+      break;
     case 'hurricane':
-      return DEFAULT_HURRICANE_ITEMS;
+      sourceArray = DEFAULT_HURRICANE_ITEMS;
+      break;
     case 'poweroutage':
-      return DEFAULT_POWEROUTAGE_ITEMS;
+      sourceArray = DEFAULT_POWEROUTAGE_ITEMS;
+      break;
     default:
       return [];
   }
+  
+  // Return a deep copy to prevent mutations to the original array
+  return sourceArray.map(item => ({ ...item, checked: false }));
 };

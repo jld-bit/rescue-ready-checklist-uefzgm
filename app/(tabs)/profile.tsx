@@ -33,6 +33,7 @@ export default function ProfileScreen() {
 
   const loadStats = async () => {
     try {
+      console.log('Loading category stats...');
       const categories = [
         { 
           name: 'fire', 
@@ -82,6 +83,11 @@ export default function ProfileScreen() {
           const items = JSON.parse(data);
           total = items.length;
           completed = items.filter((item: any) => item.checked).length;
+        } else {
+          // If no data exists, get default items count
+          const defaultItems = getDefaultItems(category.name);
+          total = defaultItems.length;
+          completed = 0;
         }
 
         stats.push({
@@ -96,6 +102,7 @@ export default function ProfileScreen() {
         });
       }
 
+      console.log('Stats loaded:', stats);
       setCategoryStats(stats);
     } catch (error) {
       console.error('Error loading stats:', error);
@@ -117,18 +124,12 @@ export default function ProfileScreen() {
               const categories = ['fire', 'earthquake', 'flood', 'hurricane', 'poweroutage'];
               
               for (const category of categories) {
-                // Get the default items for this category
-                const defaultItems = getDefaultItems(category);
-                
-                // Create fresh copy with all unchecked
-                const resetItems = defaultItems.map(item => ({
-                  ...item,
-                  checked: false
-                }));
+                // Get fresh default items (already returns with checked: false)
+                const resetItems = getDefaultItems(category);
                 
                 // Save to AsyncStorage
                 await AsyncStorage.setItem(`${category}_checklist`, JSON.stringify(resetItems));
-                console.log(`Reset ${category} checklist`);
+                console.log(`Reset ${category} checklist with ${resetItems.length} items`);
               }
               
               // Reload stats to reflect changes
@@ -159,17 +160,12 @@ export default function ProfileScreen() {
             try {
               console.log(`Resetting ${categoryName} checklist...`);
               
-              // Get the default items for this category
-              const defaultItems = getDefaultItems(categoryName);
-              
-              // Create fresh copy with all unchecked
-              const resetItems = defaultItems.map(item => ({
-                ...item,
-                checked: false
-              }));
+              // Get fresh default items (already returns with checked: false)
+              const resetItems = getDefaultItems(categoryName);
               
               // Save to AsyncStorage
               await AsyncStorage.setItem(`${categoryName}_checklist`, JSON.stringify(resetItems));
+              console.log(`Reset ${categoryName} checklist with ${resetItems.length} items`);
               
               // Reload stats to reflect changes
               await loadStats();

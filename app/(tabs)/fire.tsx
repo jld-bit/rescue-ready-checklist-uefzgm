@@ -15,13 +15,13 @@ import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { ChecklistItem } from '@/components/ChecklistItem';
 import { AddItemModal } from '@/components/AddItemModal';
-import { ChecklistItemType, DEFAULT_FIRE_ITEMS } from '@/constants/DefaultChecklists';
+import { ChecklistItemType, getDefaultItems } from '@/constants/DefaultChecklists';
 
 const STORAGE_KEY = 'fire_checklist';
 
 export default function FireScreen() {
   const router = useRouter();
-  const [items, setItems] = useState<ChecklistItemType[]>(DEFAULT_FIRE_ITEMS);
+  const [items, setItems] = useState<ChecklistItemType[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -43,6 +43,10 @@ export default function FireScreen() {
         const parsedData = JSON.parse(savedData);
         console.log('Loaded items:', parsedData.length);
         setItems(parsedData);
+      } else {
+        // If no saved data, initialize with default items
+        const defaultItems = getDefaultItems('fire');
+        setItems(defaultItems);
       }
     } catch (error) {
       console.error('Error loading items:', error);
@@ -97,11 +101,9 @@ export default function FireScreen() {
           onPress: async () => {
             try {
               console.log('Resetting fire checklist...');
-              // Create a fresh copy of default items with all unchecked
-              const resetItems = DEFAULT_FIRE_ITEMS.map(item => ({ 
-                ...item, 
-                checked: false 
-              }));
+              
+              // Get fresh default items (already returns with checked: false)
+              const resetItems = getDefaultItems('fire');
               
               // Save to AsyncStorage
               await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(resetItems));
@@ -109,7 +111,7 @@ export default function FireScreen() {
               // Update state
               setItems(resetItems);
               
-              console.log('Fire checklist reset successfully');
+              console.log('Fire checklist reset successfully with', resetItems.length, 'items');
               Alert.alert('Success', 'Checklist has been reset.');
             } catch (error) {
               console.error('Error resetting checklist:', error);
