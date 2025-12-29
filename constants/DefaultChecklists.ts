@@ -105,6 +105,7 @@ export const getDefaultItems = (category: string): ChecklistItemType[] => {
       return [];
   }
   
-  // Return a deep copy to prevent mutations to the original array
-  return sourceArray.map(item => ({ ...item, checked: false }));
+  // Return a proper deep copy to prevent any mutations to the original array
+  // Using JSON parse/stringify ensures complete independence from source
+  return JSON.parse(JSON.stringify(sourceArray));
 };
