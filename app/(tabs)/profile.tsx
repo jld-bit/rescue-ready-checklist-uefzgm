@@ -6,39 +6,96 @@ import { IconSymbol } from "@/components/IconSymbol";
 import { GlassView } from "expo-glass-effect";
 import { useTheme } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
+
+interface CategoryStats {
+  name: string;
+  displayName: string;
+  icon: string;
+  androidIcon: string;
+  color: string;
+  totalItems: number;
+  completedItems: number;
+  completionPercentage: number;
+}
 
 export default function ProfileScreen() {
   const theme = useTheme();
-  const [stats, setStats] = useState({
-    totalItems: 0,
-    completedItems: 0,
-    completionPercentage: 0,
-  });
+  const [categoryStats, setCategoryStats] = useState<CategoryStats[]>([]);
 
-  useEffect(() => {
-    loadStats();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadStats();
+    }, [])
+  );
 
   const loadStats = async () => {
     try {
-      const categories = ['fire', 'earthquake', 'flood', 'hurricane', 'poweroutage'];
-      let total = 0;
-      let completed = 0;
+      const categories = [
+        { 
+          name: 'fire', 
+          displayName: 'Fire Emergency',
+          icon: 'flame.fill',
+          androidIcon: 'local-fire-department',
+          color: '#E74C3C'
+        },
+        { 
+          name: 'earthquake', 
+          displayName: 'Earthquake',
+          icon: 'waveform.path.ecg',
+          androidIcon: 'warning',
+          color: '#8E44AD'
+        },
+        { 
+          name: 'flood', 
+          displayName: 'Flood',
+          icon: 'drop.fill',
+          androidIcon: 'water',
+          color: '#3498DB'
+        },
+        { 
+          name: 'hurricane', 
+          displayName: 'Hurricane',
+          icon: 'wind',
+          androidIcon: 'air',
+          color: '#16A085'
+        },
+        { 
+          name: 'poweroutage', 
+          displayName: 'Power Outage',
+          icon: 'bolt.slash.fill',
+          androidIcon: 'power-off',
+          color: '#F39C12'
+        },
+      ];
+
+      const stats: CategoryStats[] = [];
 
       for (const category of categories) {
-        const data = await AsyncStorage.getItem(`checklist_${category}`);
+        const data = await AsyncStorage.getItem(`${category.name}_checklist`);
+        let total = 0;
+        let completed = 0;
+
         if (data) {
           const items = JSON.parse(data);
-          total += items.length;
-          completed += items.filter((item: any) => item.checked).length;
+          total = items.length;
+          completed = items.filter((item: any) => item.checked).length;
         }
+
+        stats.push({
+          name: category.name,
+          displayName: category.displayName,
+          icon: category.icon,
+          androidIcon: category.androidIcon,
+          color: category.color,
+          totalItems: total,
+          completedItems: completed,
+          completionPercentage: total > 0 ? Math.round((completed / total) * 100) : 0,
+        });
       }
 
-      setStats({
-        totalItems: total,
-        completedItems: completed,
-        completionPercentage: total > 0 ? Math.round((completed / total) * 100) : 0,
-      });
+      setCategoryStats(stats);
     } catch (error) {
       console.log('Error loading stats:', error);
     }
@@ -57,13 +114,37 @@ export default function ProfileScreen() {
             try {
               const categories = ['fire', 'earthquake', 'flood', 'hurricane', 'poweroutage'];
               for (const category of categories) {
-                await AsyncStorage.removeItem(`checklist_${category}`);
+                await AsyncStorage.removeItem(`${category}_checklist`);
               }
               loadStats();
               Alert.alert('Success', 'All checklists have been reset.');
             } catch (error) {
               console.log('Error resetting checklists:', error);
               Alert.alert('Error', 'Failed to reset checklists.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleResetCategory = (categoryName: string, displayName: string) => {
+    Alert.alert(
+      `Reset ${displayName}`,
+      `Are you sure you want to reset the ${displayName} checklist?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem(`${categoryName}_checklist`);
+              loadStats();
+              Alert.alert('Success', `${displayName} checklist has been reset.`);
+            } catch (error) {
+              console.log('Error resetting checklist:', error);
+              Alert.alert('Error', 'Failed to reset checklist.');
             }
           },
         },
@@ -82,31 +163,65 @@ export default function ProfileScreen() {
       >
         <Text style={[styles.title, { color: theme.colors.text }]}>Emergency Preparedness</Text>
 
-        <GlassView style={[
-          styles.statsCard,
-          Platform.OS !== 'ios' && { backgroundColor: theme.dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }
-        ]} glassEffectStyle="regular">
-          <View style={styles.statRow}>
-            <IconSymbol ios_icon_name="checkmark.circle.fill" android_material_icon_name="check-circle" size={40} color="#1ABC9C" />
-            <View style={styles.statContent}>
-              <Text style={[styles.statValue, { color: theme.colors.text }]}>{stats.completionPercentage}%</Text>
-              <Text style={[styles.statLabel, { color: theme.dark ? '#98989D' : '#666' }]}>Overall Completion</Text>
+        <Text style={[styles.sectionHeader, { color: theme.colors.text }]}>Category Progress</Text>
+
+        {categoryStats.map((category, index) => (
+          <GlassView 
+            key={index}
+            style={[
+              styles.categoryCard,
+              Platform.OS !== 'ios' && { backgroundColor: theme.dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }
+            ]} 
+            glassEffectStyle="regular"
+          >
+            <View style={styles.categoryHeader}>
+              <View style={styles.categoryTitleRow}>
+                <View style={[styles.categoryIconContainer, { backgroundColor: `${category.color}20` }]}>
+                  <IconSymbol 
+                    ios_icon_name={category.icon} 
+                    android_material_icon_name={category.androidIcon} 
+                    size={24} 
+                    color={category.color} 
+                  />
+                </View>
+                <View style={styles.categoryInfo}>
+                  <Text style={[styles.categoryName, { color: theme.colors.text }]}>{category.displayName}</Text>
+                  <Text style={[styles.categorySubtext, { color: theme.dark ? '#98989D' : '#666' }]}>
+                    {category.completedItems} of {category.totalItems} items ready
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity 
+                onPress={() => handleResetCategory(category.name, category.displayName)}
+                style={styles.resetButton}
+              >
+                <IconSymbol 
+                  ios_icon_name="arrow.counterclockwise" 
+                  android_material_icon_name="refresh" 
+                  size={20} 
+                  color={theme.dark ? '#98989D' : '#666'} 
+                />
+              </TouchableOpacity>
             </View>
-          </View>
-          
-          <View style={styles.divider} />
-          
-          <View style={styles.statsGrid}>
-            <View style={styles.statItem}>
-              <Text style={[styles.statNumber, { color: theme.colors.text }]}>{stats.completedItems}</Text>
-              <Text style={[styles.statLabel, { color: theme.dark ? '#98989D' : '#666' }]}>Items Ready</Text>
+
+            <View style={styles.progressContainer}>
+              <View style={[styles.progressBar, { backgroundColor: theme.dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
+                <View 
+                  style={[
+                    styles.progressFill, 
+                    { 
+                      width: `${category.completionPercentage}%`,
+                      backgroundColor: category.color
+                    }
+                  ]} 
+                />
+              </View>
+              <Text style={[styles.progressPercentage, { color: theme.colors.text }]}>
+                {category.completionPercentage}%
+              </Text>
             </View>
-            <View style={styles.statItem}>
-              <Text style={[styles.statNumber, { color: theme.colors.text }]}>{stats.totalItems - stats.completedItems}</Text>
-              <Text style={[styles.statLabel, { color: theme.dark ? '#98989D' : '#666' }]}>Items Needed</Text>
-            </View>
-          </View>
-        </GlassView>
+          </GlassView>
+        ))}
 
         <GlassView style={[
           styles.section,
@@ -170,44 +285,71 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 24,
   },
-  statsCard: {
-    borderRadius: 12,
-    padding: 24,
+  sectionHeader: {
+    fontSize: 20,
+    fontWeight: '600',
     marginBottom: 16,
-    gap: 16,
   },
-  statRow: {
+  categoryCard: {
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 16,
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  categoryTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-  },
-  statContent: {
     flex: 1,
   },
-  statValue: {
-    fontSize: 32,
-    fontWeight: 'bold',
-  },
-  statLabel: {
-    fontSize: 14,
-    marginTop: 4,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: 'rgba(128, 128, 128, 0.2)',
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  statItem: {
+  categoryIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 12,
   },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  categoryInfo: {
+    flex: 1,
+  },
+  categoryName: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  categorySubtext: {
+    fontSize: 13,
+  },
+  resetButton: {
+    padding: 8,
+  },
+  progressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  progressBar: {
+    flex: 1,
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  progressPercentage: {
+    fontSize: 16,
+    fontWeight: '600',
+    minWidth: 45,
+    textAlign: 'right',
   },
   section: {
     borderRadius: 12,
