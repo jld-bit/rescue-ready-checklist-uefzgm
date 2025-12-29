@@ -1,14 +1,17 @@
+
 import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
 
 export const colors = {
-  primary: '#162456',    // Material Blue
-  secondary: '#193cb8',  // Darker Blue
-  accent: '#64B5F6',     // Light Blue
-  background: '#101824',  // Keeping dark background
-  backgroundAlt: '#162133',  // Keeping dark background
-  text: '#e3e3e3',       // Keeping light text
-  grey: '#90CAF9',       // Light Blue Grey
-  card: '#193cb8',       // Keeping dark card background
+  primary: '#1A5276',    // Safety Blue
+  secondary: '#1ABC9C',  // Calm Teal
+  accent: '#1ABC9C',     // Calm Teal for checkmarks
+  background: '#F4F6F7',  // Soft Gray
+  backgroundAlt: '#FFFFFF',  // White for cards
+  text: '#2C3E50',       // Dark text for readability
+  textLight: '#7F8C8D',  // Light text
+  grey: '#BDC3C7',       // Medium grey
+  card: '#FFFFFF',       // White card background
+  border: '#E8EAED',     // Light border
 };
 
 export const buttonStyles = StyleSheet.create({
@@ -72,7 +75,7 @@ export const commonStyles = StyleSheet.create({
   },
   card: {
     backgroundColor: colors.backgroundAlt,
-    borderColor: colors.grey,
+    borderColor: colors.border,
     borderWidth: 1,
     borderRadius: 10,
     padding: 10,
@@ -84,6 +87,6 @@ export const commonStyles = StyleSheet.create({
   icon: {
     width: 60,
     height: 60,
-    tintColor: "white",
+    tintColor: colors.primary,
   },
 });
