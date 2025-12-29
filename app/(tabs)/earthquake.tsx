@@ -15,34 +15,13 @@ import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { ChecklistItem } from '@/components/ChecklistItem';
 import { AddItemModal } from '@/components/AddItemModal';
-
-interface ChecklistItemType {
-  id: string;
-  label: string;
-  checked: boolean;
-  isCustom?: boolean;
-}
-
-const DEFAULT_ITEMS: ChecklistItemType[] = [
-  { id: 'earthquake-1', label: '3-day Water Supply', checked: false },
-  { id: 'earthquake-2', label: '3-day Food Supply', checked: false },
-  { id: 'earthquake-3', label: 'First Aid Kit', checked: false },
-  { id: 'earthquake-4', label: 'Flashlight & Extra Batteries', checked: false },
-  { id: 'earthquake-5', label: 'Battery-powered Radio', checked: false },
-  { id: 'earthquake-6', label: 'Emergency Whistle', checked: false },
-  { id: 'earthquake-7', label: 'Dust Masks', checked: false },
-  { id: 'earthquake-8', label: 'Plastic Sheeting & Duct Tape', checked: false },
-  { id: 'earthquake-9', label: 'Wrench or Pliers', checked: false },
-  { id: 'earthquake-10', label: 'Manual Can Opener', checked: false },
-  { id: 'earthquake-11', label: 'Local Maps', checked: false },
-  { id: 'earthquake-12', label: 'Cell Phone with Chargers', checked: false },
-];
+import { ChecklistItemType, DEFAULT_EARTHQUAKE_ITEMS } from '@/constants/DefaultChecklists';
 
 const STORAGE_KEY = 'earthquake_checklist';
 
 export default function EarthquakeScreen() {
   const router = useRouter();
-  const [items, setItems] = useState<ChecklistItemType[]>(DEFAULT_ITEMS);
+  const [items, setItems] = useState<ChecklistItemType[]>(DEFAULT_EARTHQUAKE_ITEMS);
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -118,12 +97,22 @@ export default function EarthquakeScreen() {
           onPress: async () => {
             try {
               console.log('Resetting earthquake checklist...');
-              const resetItems = DEFAULT_ITEMS.map(item => ({ ...item, checked: false }));
+              // Create a fresh copy of default items with all unchecked
+              const resetItems = DEFAULT_EARTHQUAKE_ITEMS.map(item => ({ 
+                ...item, 
+                checked: false 
+              }));
+              
+              // Save to AsyncStorage
               await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(resetItems));
+              
+              // Update state
               setItems(resetItems);
+              
+              console.log('Earthquake checklist reset successfully');
               Alert.alert('Success', 'Checklist has been reset.');
             } catch (error) {
-              console.log('Error resetting checklist:', error);
+              console.error('Error resetting checklist:', error);
               Alert.alert('Error', 'Failed to reset checklist.');
             }
           },

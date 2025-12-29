@@ -15,32 +15,13 @@ import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { ChecklistItem } from '@/components/ChecklistItem';
 import { AddItemModal } from '@/components/AddItemModal';
-
-interface ChecklistItemType {
-  id: string;
-  label: string;
-  checked: boolean;
-  isCustom?: boolean;
-}
-
-const DEFAULT_ITEMS: ChecklistItemType[] = [
-  { id: 'fire-1', label: 'Fire Extinguisher', checked: false },
-  { id: 'fire-2', label: 'Smoke Detectors (tested)', checked: false },
-  { id: 'fire-3', label: 'Emergency Escape Plan', checked: false },
-  { id: 'fire-4', label: 'Flashlight', checked: false },
-  { id: 'fire-5', label: 'First Aid Kit', checked: false },
-  { id: 'fire-6', label: 'Emergency Contact List', checked: false },
-  { id: 'fire-7', label: 'Whistle', checked: false },
-  { id: 'fire-8', label: 'Fire Blanket', checked: false },
-  { id: 'fire-9', label: 'Battery-powered Radio', checked: false },
-  { id: 'fire-10', label: 'Extra Batteries', checked: false },
-];
+import { ChecklistItemType, DEFAULT_FIRE_ITEMS } from '@/constants/DefaultChecklists';
 
 const STORAGE_KEY = 'fire_checklist';
 
 export default function FireScreen() {
   const router = useRouter();
-  const [items, setItems] = useState<ChecklistItemType[]>(DEFAULT_ITEMS);
+  const [items, setItems] = useState<ChecklistItemType[]>(DEFAULT_FIRE_ITEMS);
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -116,12 +97,22 @@ export default function FireScreen() {
           onPress: async () => {
             try {
               console.log('Resetting fire checklist...');
-              const resetItems = DEFAULT_ITEMS.map(item => ({ ...item, checked: false }));
+              // Create a fresh copy of default items with all unchecked
+              const resetItems = DEFAULT_FIRE_ITEMS.map(item => ({ 
+                ...item, 
+                checked: false 
+              }));
+              
+              // Save to AsyncStorage
               await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(resetItems));
+              
+              // Update state
               setItems(resetItems);
+              
+              console.log('Fire checklist reset successfully');
               Alert.alert('Success', 'Checklist has been reset.');
             } catch (error) {
-              console.log('Error resetting checklist:', error);
+              console.error('Error resetting checklist:', error);
               Alert.alert('Error', 'Failed to reset checklist.');
             }
           },

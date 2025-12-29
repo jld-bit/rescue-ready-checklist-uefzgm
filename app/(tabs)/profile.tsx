@@ -8,6 +8,7 @@ import { useTheme } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
+import { getDefaultItems } from "@/constants/DefaultChecklists";
 
 interface CategoryStats {
   name: string;
@@ -97,7 +98,7 @@ export default function ProfileScreen() {
 
       setCategoryStats(stats);
     } catch (error) {
-      console.log('Error loading stats:', error);
+      console.error('Error loading stats:', error);
     }
   };
 
@@ -112,25 +113,31 @@ export default function ProfileScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
+              console.log('Resetting all checklists...');
               const categories = ['fire', 'earthquake', 'flood', 'hurricane', 'poweroutage'];
+              
               for (const category of categories) {
-                const data = await AsyncStorage.getItem(`${category}_checklist`);
-                if (data) {
-                  const items = JSON.parse(data);
-                  // Keep only non-custom items and reset their checked state
-                  const resetItems = items
-                    .filter((item: any) => !item.isCustom)
-                    .map((item: any) => ({
-                      ...item,
-                      checked: false
-                    }));
-                  await AsyncStorage.setItem(`${category}_checklist`, JSON.stringify(resetItems));
-                }
+                // Get the default items for this category
+                const defaultItems = getDefaultItems(category);
+                
+                // Create fresh copy with all unchecked
+                const resetItems = defaultItems.map(item => ({
+                  ...item,
+                  checked: false
+                }));
+                
+                // Save to AsyncStorage
+                await AsyncStorage.setItem(`${category}_checklist`, JSON.stringify(resetItems));
+                console.log(`Reset ${category} checklist`);
               }
+              
+              // Reload stats to reflect changes
               await loadStats();
+              
+              console.log('All checklists reset successfully');
               Alert.alert('Success', 'All checklists have been reset.');
             } catch (error) {
-              console.log('Error resetting checklists:', error);
+              console.error('Error resetting checklists:', error);
               Alert.alert('Error', 'Failed to reset checklists.');
             }
           },
@@ -150,22 +157,27 @@ export default function ProfileScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              const data = await AsyncStorage.getItem(`${categoryName}_checklist`);
-              if (data) {
-                const items = JSON.parse(data);
-                // Keep only non-custom items and reset their checked state
-                const resetItems = items
-                  .filter((item: any) => !item.isCustom)
-                  .map((item: any) => ({
-                    ...item,
-                    checked: false
-                  }));
-                await AsyncStorage.setItem(`${categoryName}_checklist`, JSON.stringify(resetItems));
-              }
+              console.log(`Resetting ${categoryName} checklist...`);
+              
+              // Get the default items for this category
+              const defaultItems = getDefaultItems(categoryName);
+              
+              // Create fresh copy with all unchecked
+              const resetItems = defaultItems.map(item => ({
+                ...item,
+                checked: false
+              }));
+              
+              // Save to AsyncStorage
+              await AsyncStorage.setItem(`${categoryName}_checklist`, JSON.stringify(resetItems));
+              
+              // Reload stats to reflect changes
               await loadStats();
+              
+              console.log(`${displayName} checklist reset successfully`);
               Alert.alert('Success', `${displayName} checklist has been reset.`);
             } catch (error) {
-              console.log('Error resetting checklist:', error);
+              console.error('Error resetting checklist:', error);
               Alert.alert('Error', 'Failed to reset checklist.');
             }
           },

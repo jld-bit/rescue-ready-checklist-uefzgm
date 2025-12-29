@@ -15,35 +15,13 @@ import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { ChecklistItem } from '@/components/ChecklistItem';
 import { AddItemModal } from '@/components/AddItemModal';
-
-interface ChecklistItemType {
-  id: string;
-  label: string;
-  checked: boolean;
-  isCustom?: boolean;
-}
-
-const DEFAULT_ITEMS: ChecklistItemType[] = [
-  { id: 'power-1', label: 'Flashlights', checked: false },
-  { id: 'power-2', label: 'Extra Batteries', checked: false },
-  { id: 'power-3', label: 'Battery-powered Radio', checked: false },
-  { id: 'power-4', label: 'Candles & Matches', checked: false },
-  { id: 'power-5', label: 'Portable Phone Chargers', checked: false },
-  { id: 'power-6', label: 'Non-perishable Food', checked: false },
-  { id: 'power-7', label: 'Manual Can Opener', checked: false },
-  { id: 'power-8', label: 'Bottled Water', checked: false },
-  { id: 'power-9', label: 'First Aid Kit', checked: false },
-  { id: 'power-10', label: 'Blankets', checked: false },
-  { id: 'power-11', label: 'Generator (if available)', checked: false },
-  { id: 'power-12', label: 'Fuel for Generator', checked: false },
-  { id: 'power-13', label: 'Ice Packs for Cooler', checked: false },
-];
+import { ChecklistItemType, DEFAULT_POWEROUTAGE_ITEMS } from '@/constants/DefaultChecklists';
 
 const STORAGE_KEY = 'poweroutage_checklist';
 
 export default function PowerOutageScreen() {
   const router = useRouter();
-  const [items, setItems] = useState<ChecklistItemType[]>(DEFAULT_ITEMS);
+  const [items, setItems] = useState<ChecklistItemType[]>(DEFAULT_POWEROUTAGE_ITEMS);
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -119,12 +97,22 @@ export default function PowerOutageScreen() {
           onPress: async () => {
             try {
               console.log('Resetting power outage checklist...');
-              const resetItems = DEFAULT_ITEMS.map(item => ({ ...item, checked: false }));
+              // Create a fresh copy of default items with all unchecked
+              const resetItems = DEFAULT_POWEROUTAGE_ITEMS.map(item => ({ 
+                ...item, 
+                checked: false 
+              }));
+              
+              // Save to AsyncStorage
               await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(resetItems));
+              
+              // Update state
               setItems(resetItems);
+              
+              console.log('Power outage checklist reset successfully');
               Alert.alert('Success', 'Checklist has been reset.');
             } catch (error) {
-              console.log('Error resetting checklist:', error);
+              console.error('Error resetting checklist:', error);
               Alert.alert('Error', 'Failed to reset checklist.');
             }
           },

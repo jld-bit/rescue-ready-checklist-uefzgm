@@ -15,36 +15,13 @@ import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
 import { ChecklistItem } from '@/components/ChecklistItem';
 import { AddItemModal } from '@/components/AddItemModal';
-
-interface ChecklistItemType {
-  id: string;
-  label: string;
-  checked: boolean;
-  isCustom?: boolean;
-}
-
-const DEFAULT_ITEMS: ChecklistItemType[] = [
-  { id: 'hurricane-1', label: '3-day Water Supply', checked: false },
-  { id: 'hurricane-2', label: '3-day Food Supply', checked: false },
-  { id: 'hurricane-3', label: 'First Aid Kit', checked: false },
-  { id: 'hurricane-4', label: 'Flashlight & Extra Batteries', checked: false },
-  { id: 'hurricane-5', label: 'Battery-powered Radio', checked: false },
-  { id: 'hurricane-6', label: 'Emergency Whistle', checked: false },
-  { id: 'hurricane-7', label: 'Plastic Sheeting & Duct Tape', checked: false },
-  { id: 'hurricane-8', label: 'Plywood for Windows', checked: false },
-  { id: 'hurricane-9', label: 'Generator (if available)', checked: false },
-  { id: 'hurricane-10', label: 'Fuel for Generator', checked: false },
-  { id: 'hurricane-11', label: 'Important Documents (waterproof)', checked: false },
-  { id: 'hurricane-12', label: 'Cash & Credit Cards', checked: false },
-  { id: 'hurricane-13', label: 'Medications', checked: false },
-  { id: 'hurricane-14', label: 'Pet Supplies', checked: false },
-];
+import { ChecklistItemType, DEFAULT_HURRICANE_ITEMS } from '@/constants/DefaultChecklists';
 
 const STORAGE_KEY = 'hurricane_checklist';
 
 export default function HurricaneScreen() {
   const router = useRouter();
-  const [items, setItems] = useState<ChecklistItemType[]>(DEFAULT_ITEMS);
+  const [items, setItems] = useState<ChecklistItemType[]>(DEFAULT_HURRICANE_ITEMS);
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -120,12 +97,22 @@ export default function HurricaneScreen() {
           onPress: async () => {
             try {
               console.log('Resetting hurricane checklist...');
-              const resetItems = DEFAULT_ITEMS.map(item => ({ ...item, checked: false }));
+              // Create a fresh copy of default items with all unchecked
+              const resetItems = DEFAULT_HURRICANE_ITEMS.map(item => ({ 
+                ...item, 
+                checked: false 
+              }));
+              
+              // Save to AsyncStorage
               await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(resetItems));
+              
+              // Update state
               setItems(resetItems);
+              
+              console.log('Hurricane checklist reset successfully');
               Alert.alert('Success', 'Checklist has been reset.');
             } catch (error) {
-              console.log('Error resetting checklist:', error);
+              console.error('Error resetting checklist:', error);
               Alert.alert('Error', 'Failed to reset checklist.');
             }
           },
