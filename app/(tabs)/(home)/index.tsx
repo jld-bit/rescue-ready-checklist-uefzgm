@@ -77,9 +77,9 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.grid}>
-          {emergencyCategories.map((category, index) => (
+          {emergencyCategories.map((category) => (
             <TouchableOpacity
-              key={index}
+              key={category.id}
               style={[styles.categoryCard, { borderLeftColor: category.color }]}
               onPress={() => handleCategoryPress(category.route)}
               activeOpacity={0.7}
