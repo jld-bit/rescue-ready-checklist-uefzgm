@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import { colors } from '@/styles/commonStyles';
 
@@ -33,6 +34,7 @@ export function AddItemModal({ visible, onClose, onAdd }: AddItemModalProps) {
 
   const handleClose = () => {
     setItemText('');
+    Keyboard.dismiss();
     onClose();
   };
 
@@ -43,57 +45,62 @@ export function AddItemModal({ visible, onClose, onAdd }: AddItemModalProps) {
       animationType="fade"
       onRequestClose={handleClose}
     >
-      <TouchableWithoutFeedback onPress={handleClose}>
-        <View style={styles.overlay}>
-          <TouchableWithoutFeedback>
-            <KeyboardAvoidingView
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              style={styles.modalContainer}
-            >
-              <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>Add Custom Item</Text>
-                <Text style={styles.modalSubtitle}>
-                  Enter the name of the item you want to add to your checklist
-                </Text>
-                
-                <TextInput
-                  style={styles.input}
-                  placeholder="e.g., Extra batteries"
-                  placeholderTextColor={colors.textLight}
-                  value={itemText}
-                  onChangeText={setItemText}
-                  autoFocus
-                  returnKeyType="done"
-                  onSubmitEditing={handleAdd}
-                />
-
-                <View style={styles.buttonContainer}>
-                  <TouchableOpacity
-                    style={[styles.button, styles.cancelButton]}
-                    onPress={handleClose}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.cancelButtonText}>Cancel</Text>
-                  </TouchableOpacity>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoidingView}
+      >
+        <TouchableWithoutFeedback onPress={handleClose}>
+          <View style={styles.overlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.modalContainer}>
+                <View style={styles.modalContent}>
+                  <Text style={styles.modalTitle}>Add Custom Item</Text>
+                  <Text style={styles.modalSubtitle}>
+                    Enter the name of the item you want to add to your checklist
+                  </Text>
                   
-                  <TouchableOpacity
-                    style={[styles.button, styles.addButton]}
-                    onPress={handleAdd}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.addButtonText}>Add Item</Text>
-                  </TouchableOpacity>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="e.g., Extra batteries"
+                    placeholderTextColor={colors.textLight}
+                    value={itemText}
+                    onChangeText={setItemText}
+                    autoFocus
+                    returnKeyType="done"
+                    onSubmitEditing={handleAdd}
+                  />
+
+                  <View style={styles.buttonContainer}>
+                    <TouchableOpacity
+                      style={[styles.button, styles.cancelButton]}
+                      onPress={handleClose}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.cancelButtonText}>Cancel</Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity
+                      style={[styles.button, styles.addButton]}
+                      onPress={handleAdd}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.addButtonText}>Add Item</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
-            </KeyboardAvoidingView>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  keyboardAvoidingView: {
+    flex: 1,
+  },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -103,13 +110,13 @@ const styles = StyleSheet.create({
   modalContainer: {
     width: '100%',
     paddingHorizontal: 20,
+    maxWidth: 400,
   },
   modalContent: {
     backgroundColor: colors.card,
     borderRadius: 20,
     padding: 24,
     width: '100%',
-    maxWidth: 400,
   },
   modalTitle: {
     fontSize: 22,
