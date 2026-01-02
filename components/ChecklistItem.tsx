@@ -1,53 +1,64 @@
 
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { colors } from '@/styles/commonStyles';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Platform,
+} from 'react-native';
 import { IconSymbol } from './IconSymbol';
+import { colors } from '@/styles/commonStyles';
 
 interface ChecklistItemProps {
-  item: {
-    id: string;
-    label: string;
-    checked: boolean;
-  };
+  id: string;
+  label: string;
+  checked: boolean;
   onToggle: (id: string) => void;
   onDelete?: (id: string) => void;
   isCustom?: boolean;
 }
 
-export function ChecklistItem({ item, onToggle, onDelete, isCustom = false }: ChecklistItemProps) {
+export function ChecklistItem({
+  id,
+  label,
+  checked,
+  onToggle,
+  onDelete,
+  isCustom,
+}: ChecklistItemProps) {
   return (
     <View style={styles.container}>
       <TouchableOpacity
         style={styles.checkboxContainer}
-        onPress={() => onToggle(item.id)}
+        onPress={() => onToggle(id)}
         activeOpacity={0.7}
       >
-        <View style={[styles.checkbox, item.checked && styles.checkboxChecked]}>
-          {item.checked && (
+        <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
+          {checked && (
             <IconSymbol
               ios_icon_name="checkmark"
               android_material_icon_name="check"
               size={18}
-              color={colors.card}
+              color="#FFFFFF"
             />
           )}
         </View>
-        <Text style={[styles.label, item.checked && styles.labelChecked]}>
-          {item.label}
+        <Text style={[styles.label, checked && styles.labelChecked]}>
+          {label}
         </Text>
       </TouchableOpacity>
       {isCustom && onDelete && (
         <TouchableOpacity
+          onPress={() => onDelete(id)}
           style={styles.deleteButton}
-          onPress={() => onDelete(item.id)}
           activeOpacity={0.7}
         >
           <IconSymbol
             ios_icon_name="trash"
             android_material_icon_name="delete"
             size={20}
-            color={colors.textLight}
+            color="#FF3B30"
           />
         </TouchableOpacity>
       )}
@@ -59,12 +70,11 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.card,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: colors.backgroundAlt,
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.06)',
-    elevation: 2,
+    marginBottom: 8,
   },
   checkboxContainer: {
     flex: 1,
@@ -72,18 +82,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   checkbox: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     borderWidth: 2,
-    borderColor: colors.grey,
+    borderColor: colors.accent,
+    marginRight: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
   },
   checkboxChecked: {
-    backgroundColor: colors.secondary,
-    borderColor: colors.secondary,
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   label: {
     fontSize: 16,
@@ -91,8 +101,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   labelChecked: {
-    color: colors.textLight,
     textDecorationLine: 'line-through',
+    opacity: 0.6,
   },
   deleteButton: {
     padding: 8,

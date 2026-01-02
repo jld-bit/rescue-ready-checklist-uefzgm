@@ -1,5 +1,10 @@
 
+import { ChecklistItemType, getDefaultItems } from '@/constants/DefaultChecklists';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ChecklistItem } from '@/components/ChecklistItem';
+import { useRouter, useFocusEffect } from 'expo-router';
 import React, { useState, useCallback } from 'react';
+import { AddItemModal } from '@/components/AddItemModal';
 import {
   View,
   Text,
@@ -8,65 +13,52 @@ import {
   StyleSheet,
   Platform,
 } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { colors } from '@/styles/commonStyles';
 import { IconSymbol } from '@/components/IconSymbol';
-import { ChecklistItem } from '@/components/ChecklistItem';
-import { AddItemModal } from '@/components/AddItemModal';
-import { ChecklistItemType, getDefaultItems } from '@/constants/DefaultChecklists';
+import { colors } from '@/styles/commonStyles';
 
-const STORAGE_KEY = 'earthquake_checklist';
+const STORAGE_KEY = '@earthquake_checklist';
 const CATEGORY = 'earthquake';
 
 export default function EarthquakeScreen() {
-  const router = useRouter();
   const [items, setItems] = useState<ChecklistItemType[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const router = useRouter();
+
+  useFocusEffect(
+    useCallback(() => {
+      loadItems();
+    }, [])
+  );
 
   const loadItems = async () => {
     try {
-      console.log('Loading earthquake checklist items...');
-      const savedData = await AsyncStorage.getItem(STORAGE_KEY);
-      if (savedData) {
-        const parsedData = JSON.parse(savedData);
-        console.log(`Loaded ${parsedData.length} items from storage`);
-        const checkedCount = parsedData.filter((item: ChecklistItemType) => item.checked).length;
-        console.log(`${checkedCount} items are checked`);
-        setItems(parsedData);
+      const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        setItems(JSON.parse(stored));
       } else {
-        console.log('No saved data found, loading defaults');
-        const defaultItems = getDefaultItems(CATEGORY);
-        setItems(defaultItems);
-        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(defaultItems));
+        const defaults = getDefaultItems(CATEGORY);
+        setItems(defaults);
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(defaults));
       }
     } catch (error) {
       console.error('Error loading items:', error);
     }
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      console.log('Earthquake screen focused, reloading items...');
-      loadItems();
-    }, [])
-  );
-
   const saveItems = async (updatedItems: ChecklistItemType[]) => {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedItems));
-      console.log('Saved earthquake checklist items');
+      setItems(updatedItems);
     } catch (error) {
       console.error('Error saving items:', error);
     }
   };
 
   const handleToggle = (id: string) => {
-    const updatedItems = items.map(item =>
+    const updated = items.map((item) =>
       item.id === id ? { ...item, checked: !item.checked } : item
     );
-    setItems(updatedItems);
-    saveItems(updatedItems);
+    saveItems(updated);
   };
 
   const handleAddItem = (label: string) => {
@@ -76,84 +68,33 @@ export default function EarthquakeScreen() {
       checked: false,
       isCustom: true,
     };
-    const updatedItems = [...items, newItem];
-    setItems(updatedItems);
-    saveItems(updatedItems);
+    saveItems([...items, newItem]);
   };
 
   const handleDeleteItem = (id: string) => {
-    const updatedItems = items.filter(item => item.id !== id);
-    setItems(updatedItems);
-    saveItems(updatedItems);
+    const updated = items.filter((item) => item.id !== id);
+    saveItems(updated);
   };
-
-  const checkedCount = items.filter(item => item.checked).length;
-  const totalCount = items.length;
-  const progress = totalCount > 0 ? (checkedCount / totalCount) * 100 : 0;
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-            activeOpacity={0.7}
-          >
-            <IconSymbol
-              ios_icon_name="chevron.left"
-              android_material_icon_name="chevron-left"
-              size={24}
-              color={colors.text}
-            />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.headerContent}>
-          <View style={styles.iconContainer}>
-            <IconSymbol
-              ios_icon_name="waveform.path.ecg"
-              android_material_icon_name="warning"
-              size={28}
-              color="#8E44AD"
-            />
-          </View>
-          <View style={styles.headerTextContainer}>
-            <Text style={styles.headerTitle}>Earthquake</Text>
-            <Text style={styles.headerSubtitle}>
-              {checkedCount} of {totalCount} items ready
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => setModalVisible(true)}
-            activeOpacity={0.7}
-          >
-            <IconSymbol
-              ios_icon_name="plus.circle.fill"
-              android_material_icon_name="add-circle"
-              size={32}
-              color={colors.primary}
-            />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <IconSymbol name="chevron.left" size={24} color={colors.text} />
+        </TouchableOpacity>
+        <Text style={styles.title}>Earthquake</Text>
+        <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.addButton}>
+          <IconSymbol name="plus" size={24} color={colors.accent} />
+        </TouchableOpacity>
       </View>
 
-      <View style={styles.progressContainer}>
-        <View style={styles.progressBar}>
-          <View style={[styles.progressFill, { width: `${progress}%` }]} />
-        </View>
-        <Text style={styles.progressText}>{Math.round(progress)}% Complete</Text>
-      </View>
-
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {items.map((item, index) => (
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+        {items.map((item) => (
           <ChecklistItem
             key={item.id}
-            item={item}
+            id={item.id}
+            label={item.label}
+            checked={item.checked}
             onToggle={handleToggle}
             onDelete={item.isCustom ? handleDeleteItem : undefined}
             isCustom={item.isCustom}
@@ -176,85 +117,34 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    paddingTop: Platform.OS === 'android' ? 48 : 60,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    backgroundColor: colors.card,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  headerTop: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
     alignItems: 'center',
-    marginBottom: 12,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingBottom: 16,
+    backgroundColor: colors.backgroundAlt,
   },
   backButton: {
+    padding: 8,
     width: 40,
-    height: 40,
-    justifyContent: 'center',
   },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#8E44AD20',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  headerTextContainer: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: colors.textLight,
-  },
-  addButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 8,
-  },
-  progressContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: colors.card,
-  },
-  progressBar: {
-    height: 8,
-    backgroundColor: colors.background,
-    borderRadius: 4,
-    overflow: 'hidden',
-    marginBottom: 8,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: colors.secondary,
-    borderRadius: 4,
-  },
-  progressText: {
-    fontSize: 14,
+  title: {
+    fontSize: 20,
     fontWeight: '600',
     color: colors.text,
+    flex: 1,
     textAlign: 'center',
+  },
+  addButton: {
+    padding: 8,
+    width: 40,
+    alignItems: 'flex-end',
   },
   scrollView: {
     flex: 1,
   },
-  scrollContent: {
+  content: {
     padding: 16,
-    paddingBottom: 100,
   },
 });

@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { colors } from '@/styles/commonStyles';
 import {
   Modal,
   View,
@@ -12,7 +13,6 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
-import { colors } from '@/styles/commonStyles';
 
 interface AddItemModalProps {
   visible: boolean;
@@ -21,20 +21,18 @@ interface AddItemModalProps {
 }
 
 export function AddItemModal({ visible, onClose, onAdd }: AddItemModalProps) {
-  const [itemText, setItemText] = useState('');
+  const [label, setLabel] = useState('');
 
   const handleAdd = () => {
-    if (itemText.trim()) {
-      console.log('Adding item:', itemText);
-      onAdd(itemText.trim());
-      setItemText('');
+    if (label.trim()) {
+      onAdd(label.trim());
+      setLabel('');
       onClose();
     }
   };
 
   const handleClose = () => {
-    setItemText('');
-    Keyboard.dismiss();
+    setLabel('');
     onClose();
   };
 
@@ -45,62 +43,49 @@ export function AddItemModal({ visible, onClose, onAdd }: AddItemModalProps) {
       animationType="fade"
       onRequestClose={handleClose}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoidingView}
-      >
-        <TouchableWithoutFeedback onPress={handleClose}>
-          <View style={styles.overlay}>
-            <TouchableWithoutFeedback>
-              <View style={styles.modalContainer}>
-                <View style={styles.modalContent}>
-                  <Text style={styles.modalTitle}>Add Custom Item</Text>
-                  <Text style={styles.modalSubtitle}>
-                    Enter the name of the item you want to add to your checklist
-                  </Text>
-                  
-                  <TextInput
-                    style={styles.input}
-                    placeholder="e.g., Extra batteries"
-                    placeholderTextColor={colors.textLight}
-                    value={itemText}
-                    onChangeText={setItemText}
-                    autoFocus
-                    returnKeyType="done"
-                    onSubmitEditing={handleAdd}
-                  />
-
-                  <View style={styles.buttonContainer}>
-                    <TouchableOpacity
-                      style={[styles.button, styles.cancelButton]}
-                      onPress={handleClose}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.cancelButtonText}>Cancel</Text>
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity
-                      style={[styles.button, styles.addButton]}
-                      onPress={handleAdd}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.addButtonText}>Add Item</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.overlay}
+        >
+          <TouchableWithoutFeedback>
+            <View style={styles.modalContainer}>
+              <Text style={styles.title}>Add Custom Item</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter item name"
+                placeholderTextColor="#999"
+                value={label}
+                onChangeText={setLabel}
+                autoFocus
+                returnKeyType="done"
+                onSubmitEditing={handleAdd}
+              />
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                  style={[styles.button, styles.cancelButton]}
+                  onPress={handleClose}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.button, styles.addButton]}
+                  onPress={handleAdd}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.addButtonText}>Add</Text>
+                </TouchableOpacity>
               </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  keyboardAvoidingView: {
-    flex: 1,
-  },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -108,62 +93,56 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContainer: {
-    width: '100%',
-    paddingHorizontal: 20,
+    backgroundColor: colors.backgroundAlt,
+    borderRadius: 16,
+    padding: 24,
+    width: '85%',
     maxWidth: 400,
   },
-  modalContent: {
-    backgroundColor: colors.card,
-    borderRadius: 20,
-    padding: 24,
-    width: '100%',
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: '700',
+  title: {
+    fontSize: 20,
+    fontWeight: '600',
     color: colors.text,
-    marginBottom: 8,
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    color: colors.textLight,
-    marginBottom: 20,
-    lineHeight: 20,
+    marginBottom: 16,
+    textAlign: 'center',
   },
   input: {
     backgroundColor: colors.background,
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 8,
+    padding: 12,
     fontSize: 16,
     color: colors.text,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.accent,
   },
   buttonContainer: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     gap: 12,
   },
   button: {
     flex: 1,
-    padding: 16,
-    borderRadius: 12,
+    paddingVertical: 12,
+    borderRadius: 8,
     alignItems: 'center',
   },
   cancelButton: {
     backgroundColor: colors.background,
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
+    borderWidth: 1,
+    borderColor: colors.grey,
   },
   addButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.accent,
   },
-  addButtonText: {
+  cancelButtonText: {
+    color: colors.text,
     fontSize: 16,
     fontWeight: '600',
-    color: colors.card,
+  },
+  addButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
