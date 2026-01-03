@@ -1,10 +1,5 @@
 
-import { colors } from '@/styles/commonStyles';
-import { IconSymbol } from '@/components/IconSymbol';
-import { ChecklistItemType, getDefaultItems } from '@/constants/DefaultChecklists';
 import React, { useState, useCallback } from 'react';
-import { useRouter, useFocusEffect } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View,
   Text,
@@ -13,52 +8,65 @@ import {
   StyleSheet,
   Platform,
 } from 'react-native';
-import { AddItemModal } from '@/components/AddItemModal';
+import { useRouter, useFocusEffect } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { colors } from '@/styles/commonStyles';
+import { IconSymbol } from '@/components/IconSymbol';
 import { ChecklistItem } from '@/components/ChecklistItem';
+import { AddItemModal } from '@/components/AddItemModal';
+import { ChecklistItemType, getDefaultItems } from '@/constants/DefaultChecklists';
 
-const STORAGE_KEY = '@flood_checklist';
+const STORAGE_KEY = 'flood_checklist';
 const CATEGORY = 'flood';
 
 export default function FloodScreen() {
+  const router = useRouter();
   const [items, setItems] = useState<ChecklistItemType[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
-  const router = useRouter();
-
-  useFocusEffect(
-    useCallback(() => {
-      loadItems();
-    }, [])
-  );
 
   const loadItems = async () => {
     try {
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setItems(JSON.parse(stored));
+      console.log('Loading flood checklist items...');
+      const savedData = await AsyncStorage.getItem(STORAGE_KEY);
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        console.log(`Loaded ${parsedData.length} items from storage`);
+        const checkedCount = parsedData.filter((item: ChecklistItemType) => item.checked).length;
+        console.log(`${checkedCount} items are checked`);
+        setItems(parsedData);
       } else {
-        const defaults = getDefaultItems(CATEGORY);
-        setItems(defaults);
-        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(defaults));
+        console.log('No saved data found, loading defaults');
+        const defaultItems = getDefaultItems(CATEGORY);
+        setItems(defaultItems);
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(defaultItems));
       }
     } catch (error) {
       console.error('Error loading items:', error);
     }
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      console.log('Flood screen focused, reloading items...');
+      loadItems();
+    }, [])
+  );
+
   const saveItems = async (updatedItems: ChecklistItemType[]) => {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedItems));
-      setItems(updatedItems);
+      console.log('Saved flood checklist items');
     } catch (error) {
       console.error('Error saving items:', error);
     }
   };
 
   const handleToggle = (id: string) => {
-    const updated = items.map((item) =>
+    const updatedItems = items.map(item =>
       item.id === id ? { ...item, checked: !item.checked } : item
     );
-    saveItems(updated);
+    setItems(updatedItems);
+    saveItems(updatedItems);
   };
 
   const handleAddItem = (label: string) => {
@@ -68,43 +76,84 @@ export default function FloodScreen() {
       checked: false,
       isCustom: true,
     };
-    saveItems([...items, newItem]);
+    const updatedItems = [...items, newItem];
+    setItems(updatedItems);
+    saveItems(updatedItems);
   };
 
   const handleDeleteItem = (id: string) => {
-    const updated = items.filter((item) => item.id !== id);
-    saveItems(updated);
+    const updatedItems = items.filter(item => item.id !== id);
+    setItems(updatedItems);
+    saveItems(updatedItems);
   };
+
+  const checkedCount = items.filter(item => item.checked).length;
+  const totalCount = items.length;
+  const progress = totalCount > 0 ? (checkedCount / totalCount) * 100 : 0;
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <IconSymbol
-            ios_icon_name="chevron.left"
-            android_material_icon_name="arrow-back"
-            size={24}
-            color={colors.text}
-          />
-        </TouchableOpacity>
-        <Text style={styles.title}>Flood Emergency</Text>
-        <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.addButton}>
-          <IconSymbol
-            ios_icon_name="plus"
-            android_material_icon_name="add"
-            size={24}
-            color={colors.accent}
-          />
-        </TouchableOpacity>
+        <View style={styles.headerTop}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            activeOpacity={0.7}
+          >
+            <IconSymbol
+              ios_icon_name="chevron.left"
+              android_material_icon_name="chevron-left"
+              size={24}
+              color={colors.text}
+            />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.headerContent}>
+          <View style={styles.iconContainer}>
+            <IconSymbol
+              ios_icon_name="drop.fill"
+              android_material_icon_name="water"
+              size={28}
+              color="#3498DB"
+            />
+          </View>
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.headerTitle}>Flood</Text>
+            <Text style={styles.headerSubtitle}>
+              {checkedCount} of {totalCount} items ready
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => setModalVisible(true)}
+            activeOpacity={0.7}
+          >
+            <IconSymbol
+              ios_icon_name="plus.circle.fill"
+              android_material_icon_name="add-circle"
+              size={32}
+              color={colors.primary}
+            />
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-        {items.map((item) => (
+      <View style={styles.progressContainer}>
+        <View style={styles.progressBar}>
+          <View style={[styles.progressFill, { width: `${progress}%` }]} />
+        </View>
+        <Text style={styles.progressText}>{Math.round(progress)}% Complete</Text>
+      </View>
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {items.map((item, index) => (
           <ChecklistItem
             key={item.id}
-            id={item.id}
-            label={item.label}
-            checked={item.checked}
+            item={item}
             onToggle={handleToggle}
             onDelete={item.isCustom ? handleDeleteItem : undefined}
             isCustom={item.isCustom}
@@ -127,34 +176,84 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    paddingTop: Platform.OS === 'android' ? 48 : 60,
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'ios' ? 60 : 48,
     paddingBottom: 16,
-    backgroundColor: colors.backgroundAlt,
+    backgroundColor: colors.card,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   backButton: {
-    padding: 8,
     width: 40,
+    height: 40,
+    justifyContent: 'center',
   },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: colors.text,
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#3498DB20',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  headerTextContainer: {
     flex: 1,
-    textAlign: 'center',
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: colors.textLight,
   },
   addButton: {
-    padding: 8,
     width: 40,
-    alignItems: 'flex-end',
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  progressContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: colors.card,
+  },
+  progressBar: {
+    height: 8,
+    backgroundColor: colors.background,
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: colors.secondary,
+    borderRadius: 4,
+  },
+  progressText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+    textAlign: 'center',
   },
   scrollView: {
     flex: 1,
   },
-  content: {
+  scrollContent: {
     padding: 16,
     paddingBottom: 100,
   },
