@@ -1,8 +1,8 @@
 
 import React from "react";
 import { ScrollView, StyleSheet, View, Text, TouchableOpacity } from "react-native";
-import { useRouter } from "expo-router";
 import { colors } from "@/styles/commonStyles";
+import { useRouter } from "expo-router";
 import { IconSymbol } from "@/components/IconSymbol";
 
 interface EmergencyCategory {
@@ -14,105 +14,41 @@ interface EmergencyCategory {
   color: string;
 }
 
-const emergencyCategories: EmergencyCategory[] = [
-  {
-    id: 'fire',
-    title: 'Fire',
-    route: '/(tabs)/fire',
-    iosIcon: 'flame.fill',
-    androidIcon: 'local-fire-department',
-    color: '#E74C3C',
-  },
-  {
-    id: 'earthquake',
-    title: 'Earthquake',
-    route: '/(tabs)/earthquake',
-    iosIcon: 'waveform.path.ecg',
-    androidIcon: 'warning',
-    color: '#8E44AD',
-  },
-  {
-    id: 'flood',
-    title: 'Flood',
-    route: '/(tabs)/flood',
-    iosIcon: 'drop.fill',
-    androidIcon: 'water',
-    color: '#3498DB',
-  },
-  {
-    id: 'hurricane',
-    title: 'Hurricane',
-    route: '/(tabs)/hurricane',
-    iosIcon: 'wind',
-    androidIcon: 'air',
-    color: '#16A085',
-  },
-  {
-    id: 'poweroutage',
-    title: 'Power Outage',
-    route: '/(tabs)/poweroutage',
-    iosIcon: 'bolt.slash.fill',
-    androidIcon: 'power-off',
-    color: '#F39C12',
-  },
+const categories: EmergencyCategory[] = [
+  { id: "1", title: "Fire", route: "/(tabs)/fire", iosIcon: "flame.fill", androidIcon: "local-fire-department", color: "#E74C3C" },
+  { id: "2", title: "Earthquake", route: "/(tabs)/earthquake", iosIcon: "waveform.path.ecg", androidIcon: "warning", color: "#8B4513" },
+  { id: "3", title: "Flood", route: "/(tabs)/flood", iosIcon: "drop.fill", androidIcon: "water", color: "#3498DB" },
+  { id: "4", title: "Hurricane", route: "/(tabs)/hurricane", iosIcon: "tornado", androidIcon: "cyclone", color: "#9B59B6" },
+  { id: "5", title: "Power Outage", route: "/(tabs)/poweroutage", iosIcon: "bolt.slash.fill", androidIcon: "power-off", color: "#F39C12" },
 ];
 
 export default function HomeScreen() {
   const router = useRouter();
 
   const handleCategoryPress = (route: string) => {
-    console.log('Navigating to:', route);
     router.push(route as any);
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>RescueReady</Text>
-          <Text style={styles.headerSubtitle}>Emergency Preparedness Checklists</Text>
-        </View>
-
-        <View style={styles.grid}>
-          {emergencyCategories.map((category) => (
-            <TouchableOpacity
-              key={category.id}
-              style={[styles.categoryCard, { borderLeftColor: category.color }]}
-              onPress={() => handleCategoryPress(category.route)}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.iconContainer, { backgroundColor: category.color + '20' }]}>
-                <IconSymbol
-                  ios_icon_name={category.iosIcon}
-                  android_material_icon_name={category.androidIcon}
-                  size={32}
-                  color={category.color}
-                />
-              </View>
-              <View style={styles.categoryTextContainer}>
-                <Text style={styles.categoryTitle}>{category.title}</Text>
-                <Text style={styles.categorySubtitle}>Tap to view checklist</Text>
-              </View>
-              <IconSymbol
-                ios_icon_name="chevron.right"
-                android_material_icon_name="chevron-right"
-                size={24}
-                color={colors.textLight}
-              />
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Stay prepared for any emergency. Check off items as you gather them.
-          </Text>
-        </View>
-      </ScrollView>
-    </View>
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Emergency Preparedness</Text>
+        <Text style={styles.subtitle}>Select a category to view your checklist</Text>
+      </View>
+      <View style={styles.grid}>
+        {categories.map((category) => (
+          <TouchableOpacity
+            key={category.id}
+            style={[styles.card, { backgroundColor: category.color }]}
+            onPress={() => handleCategoryPress(category.route)}
+            activeOpacity={0.8}
+          >
+            <IconSymbol name={category.iosIcon} size={48} color="#FFFFFF" />
+            <Text style={styles.cardTitle}>{category.title}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </ScrollView>
   );
 }
 
@@ -121,71 +57,46 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  scrollContent: {
-    paddingTop: 20,
-    paddingHorizontal: 16,
-    paddingBottom: 120,
+  contentContainer: {
+    padding: 20,
   },
   header: {
-    marginBottom: 32,
-    alignItems: 'center',
+    marginBottom: 30,
   },
-  headerTitle: {
-    fontSize: 32,
-    fontWeight: '800',
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
     color: colors.primary,
     marginBottom: 8,
   },
-  headerSubtitle: {
+  subtitle: {
     fontSize: 16,
-    color: colors.textLight,
-    textAlign: 'center',
+    color: "#7F8C8D",
   },
   grid: {
-    gap: 16,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
   },
-  categoryCard: {
-    backgroundColor: colors.card,
+  card: {
+    width: "48%",
+    aspectRatio: 1,
     borderRadius: 16,
     padding: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderLeftWidth: 4,
-    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.08)',
-    elevation: 3,
+    marginBottom: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  categoryTextContainer: {
-    flex: 1,
-  },
-  categoryTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  categorySubtitle: {
-    fontSize: 14,
-    color: colors.textLight,
-  },
-  footer: {
-    marginTop: 32,
-    padding: 20,
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  footerText: {
-    fontSize: 14,
-    color: colors.textLight,
-    textAlign: 'center',
-    lineHeight: 20,
+  cardTitle: {
+    marginTop: 12,
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
+    textAlign: "center",
   },
 });
