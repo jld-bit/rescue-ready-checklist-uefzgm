@@ -8,6 +8,7 @@ export const colors = {
   background: '#F4F6F7',  // Soft Gray
   backgroundAlt: '#FFFFFF',  // White for cards
   text: '#2C3E50',       // Dark text for readability
+  textSecondary: '#7F8C8D',  // Secondary text color
   textLight: '#7F8C8D',  // Light text
   grey: '#BDC3C7',       // Medium grey
   card: '#FFFFFF',       // White card background

@@ -1,10 +1,10 @@
 
+import { colors } from '@/styles/commonStyles';
+import { IconSymbol } from '@/components/IconSymbol';
 import { ChecklistItemType, getDefaultItems } from '@/constants/DefaultChecklists';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ChecklistItem } from '@/components/ChecklistItem';
-import { useRouter, useFocusEffect } from 'expo-router';
 import React, { useState, useCallback } from 'react';
-import { AddItemModal } from '@/components/AddItemModal';
+import { useRouter, useFocusEffect } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View,
   Text,
@@ -13,8 +13,8 @@ import {
   StyleSheet,
   Platform,
 } from 'react-native';
-import { IconSymbol } from '@/components/IconSymbol';
-import { colors } from '@/styles/commonStyles';
+import { AddItemModal } from '@/components/AddItemModal';
+import { ChecklistItem } from '@/components/ChecklistItem';
 
 const STORAGE_KEY = '@flood_checklist';
 const CATEGORY = 'flood';
@@ -80,11 +80,21 @@ export default function FloodScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <IconSymbol name="chevron.left" size={24} color={colors.text} />
+          <IconSymbol
+            ios_icon_name="chevron.left"
+            android_material_icon_name="arrow-back"
+            size={24}
+            color={colors.text}
+          />
         </TouchableOpacity>
-        <Text style={styles.title}>Flood</Text>
+        <Text style={styles.title}>Flood Emergency</Text>
         <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.addButton}>
-          <IconSymbol name="plus" size={24} color={colors.accent} />
+          <IconSymbol
+            ios_icon_name="plus"
+            android_material_icon_name="add"
+            size={24}
+            color={colors.accent}
+          />
         </TouchableOpacity>
       </View>
 
@@ -121,7 +131,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingTop: Platform.OS === 'ios' ? 60 : 48,
     paddingBottom: 16,
     backgroundColor: colors.backgroundAlt,
   },
@@ -146,5 +156,6 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
+    paddingBottom: 100,
   },
 });
